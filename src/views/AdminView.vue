@@ -1,31 +1,28 @@
 <script>
+import { mapWritableState } from 'pinia'
+import { useDataStore } from '@/store/dataStore';
 import PlantSettings from '@/components/PlantSettings.vue';
+import BleStatus from '@/components/BleStatus.vue';
+import { sendSettingsToEsp } from '@/espConnection';
 
 export default {
   components: {
+    BleStatus,
     PlantSettings,
   },
-  data: () => ({
-    plants: [
-      {
-        moisture: 580,
-        light: 1342,
-      }
-    ],
-    settings: {
-      measureInterval: 20,
-      gameDuration: 30,
-      waterUsage: 0.25,
-      powerUsage: 5,
-      transmitInterval: 5,
-    },
-  }),
+  computed: {
+    ...mapWritableState(useDataStore, ['plants', 'settings']),
+  },
   methods: {
     logout() {
       // TODO: stuff
     },
-    save() {
-      alert('send to ESP if connected');
+    async save() {
+      try {
+        await sendSettingsToEsp();
+      } catch (e) {
+        alert(e.message);
+      }
     },
   },
 };
@@ -41,6 +38,7 @@ export default {
         <i class="fa-solid fa-arrow-right-from-bracket"></i>
       </button>
     </nav>
+    <BleStatus/>
     <form>
       <section>
         <h1>
@@ -48,10 +46,10 @@ export default {
         </h1>
         <hr>
         <!-- Foreach plant -->
-        <PlantSettings v-for="(_, i) in plants"
+        <PlantSettings v-for="(plant, i) in plants"
                        :key="i"
                        :index="i"
-                       v-model="plants[i]"
+                       :value="plant"
         />
         <!-- End foreach -->
       </section>
